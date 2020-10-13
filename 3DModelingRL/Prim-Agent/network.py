@@ -78,11 +78,11 @@ class Agent(object):
 
     def __init__(self, weights_path=None):
         
-        self.eval_net, self.target_net = Net().cuda(), Net().cuda()
+        self.eval_net, self.target_net = Net().cpu(), Net().cpu()
         
         if weights_path is not None:
-            self.eval_net.load_state_dict(torch.load(weights_path))
-            self.target_net.load_state_dict(torch.load(weights_path))
+            self.eval_net.load_state_dict(torch.load(weights_path, map_location=torch.device('cpu')))
+            self.target_net.load_state_dict(torch.load(weights_path, map_location=torch.device('cpu')))
         
         #the memory_self is shared by D_short in IL and D_self in RL
         self.memory_long = Memory(p.MEMORY_LONG_CAPACITY) 
@@ -94,9 +94,9 @@ class Agent(object):
         
     def choose_action(self, x, box, step, valid_mask, greedy=1.0):
         
-        x = torch.unsqueeze(torch.FloatTensor(x), 0).cuda()
-        box = torch.unsqueeze(torch.FloatTensor(box), 0).cuda()
-        step =  torch.unsqueeze(torch.FloatTensor(step), 0).cuda()
+        x = torch.unsqueeze(torch.FloatTensor(x), 0).cpu()
+        box = torch.unsqueeze(torch.FloatTensor(box), 0).cpu()
+        step =  torch.unsqueeze(torch.FloatTensor(step), 0).cpu()
         
         if np.random.uniform() < greedy:
             
@@ -145,23 +145,23 @@ class Agent(object):
         bs1,bbox1,bstep1,ba1,br1,bs_1,bbox_1,bstep_1=self.memory_long.sample(samples_from_expert)
         bs2,bbox2,bstep2,ba2,br2,bs_2,bbox_2,bstep_2=self.memory_self.sample(p.BATCH_SIZE-samples_from_expert)
         
-        bs=torch.FloatTensor(np.concatenate((bs1,bs2), axis=0)).cuda()
-        bbox=torch.FloatTensor(np.concatenate((bbox1,bbox2), axis=0)).cuda()
-        bstep=torch.FloatTensor(np.concatenate((bstep1,bstep2), axis=0)).cuda()
+        bs=torch.FloatTensor(np.concatenate((bs1,bs2), axis=0)).cpu()
+        bbox=torch.FloatTensor(np.concatenate((bbox1,bbox2), axis=0)).cpu()
+        bstep=torch.FloatTensor(np.concatenate((bstep1,bstep2), axis=0)).cpu()
         
-        ba=torch.FloatTensor(np.concatenate((ba1,ba2), axis=0)).cuda().long()
-        br=torch.FloatTensor(np.concatenate((br1,br2), axis=0)).cuda()
+        ba=torch.FloatTensor(np.concatenate((ba1,ba2), axis=0)).cpu().long()
+        br=torch.FloatTensor(np.concatenate((br1,br2), axis=0)).cpu()
 
-        bs_=torch.FloatTensor(np.concatenate((bs_1,bs_2), axis=0)).cuda()
-        bbox_=torch.FloatTensor(np.concatenate((bbox_1,bbox_2), axis=0)).cuda()
-        bstep_=torch.FloatTensor(np.concatenate((bstep_1,bstep_2), axis=0)).cuda()
+        bs_=torch.FloatTensor(np.concatenate((bs_1,bs_2), axis=0)).cpu()
+        bbox_=torch.FloatTensor(np.concatenate((bbox_1,bbox_2), axis=0)).cpu()
+        bstep_=torch.FloatTensor(np.concatenate((bstep_1,bstep_2), axis=0)).cpu()
         
         #expert's action's q_value
         q_all_actions = self.eval_net(bs, bbox, bstep)
         q_a_expert = q_all_actions.gather(1, ba)
         
         #margin function
-        margin = torch.FloatTensor(np.ones((p.BATCH_SIZE, p.ACTION_NUM))).cuda()*0.8
+        margin = torch.FloatTensor(np.ones((p.BATCH_SIZE, p.ACTION_NUM))).cpu()*0.8
         t=np.linspace(0,p.BATCH_SIZE-1,p.BATCH_SIZE).astype(np.int)
         margin[t,ba[t,0]]=0
             

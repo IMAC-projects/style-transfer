@@ -1,5 +1,4 @@
 import numpy as np
-import torch
 import scipy.ndimage as sn
 import copy
 from PIL import Image
