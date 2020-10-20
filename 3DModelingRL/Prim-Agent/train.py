@@ -25,7 +25,7 @@ def parse_args():
     
     parser.add_argument('--gpu', type=str, default='0', help='which gpu to use')
     parser.add_argument('--reference', type=str, default='depth', help='type of shape reference, rgb or depth image')
-    parser.add_argument('--category', type=str, default='airplane-02691156', help='category name, should be consistent with the name used in file path')
+    parser.add_argument('--category', type=str, default='car-02958343', help='category name, should be consistent with the name used in file path')
     parser.add_argument('--data_root', type=str, default='../data/', help='root directory of all the data')
     
     parser.add_argument('--save_net', type=str, default='../save_para/', help='directory to save the network parameters')
