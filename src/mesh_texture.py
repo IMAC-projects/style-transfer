@@ -34,11 +34,17 @@ from pytorch3d.renderer import (
     TexturesVertex
 )
 
+
 from plot_image_grid import image_grid
 
-device = torch.device("cpu")
+# set the device
+if torch.cuda.is_available():
+    device = torch.device("cuda:0")
+else:
+    device = torch.device("cpu")
+    print("WARNING: CPU only, this will be slow!")
 
-obj_filename = "./meshes/cow.obj"
+obj_filename = "../assets/meshes/cow.obj"
 
 # load obj
 mesh = load_objs_as_meshes([obj_filename], device=device)
@@ -189,6 +195,10 @@ def plot_losses(losses):
 # We initialize the source shape to be a sphere of radius 1.  
 src_mesh = ico_sphere(4, device)
 
+
+# Rasterization settings for differentiable rendering, where the blur_radius
+# initialization is based on Liu et al, 'Soft Rasterizer: A Differentiable 
+# Renderer for Image-based 3D Reasoning', ICCV 2019
 sigma = 1e-4
 raster_settings_soft = RasterizationSettings(
     image_size=128, 
@@ -196,11 +206,24 @@ raster_settings_soft = RasterizationSettings(
     faces_per_pixel=50, 
 )
 
+# Differentiable soft renderer using per vertex RGB colors for texture
+renderer_textured = MeshRenderer(
+    rasterizer=MeshRasterizer(
+        cameras=camera, 
+        raster_settings=raster_settings_soft
+    ),
+    shader=SoftPhongShader(device=device, 
+        cameras=camera,
+        lights=lights)
+)
+
+# Number of views to optimize over in each SGD iteration
 num_views_per_iteration = 2
 # Number of optimization steps
-Niter = 10
+Niter = 15
 # Plot period for the losses
 plot_period = 250
+
 
 # Optimize using rendered RGB image loss, rendered silhouette image loss, mesh 
 # edge loss, mesh normal consistency, and mesh laplacian smoothing
@@ -210,17 +233,6 @@ losses = {"rgb": {"weight": 1.0, "values": []},
           "normal": {"weight": 0.01, "values": []},
           "laplacian": {"weight": 1.0, "values": []},
          }
-
-# Losses to smooth / regularize the mesh shape
-def update_mesh_shape_prior_losses(mesh, loss):
-    # and (b) the edge length of the predicted mesh
-    loss["edge"] = mesh_edge_loss(mesh)
-    
-    # mesh normal consistency
-    loss["normal"] = mesh_normal_consistency(mesh)
-    
-    # mesh laplacian smoothing
-    loss["laplacian"] = mesh_laplacian_smoothing(mesh, method="uniform")
 
 # We will learn to deform the source mesh by offsetting its vertices
 # The shape of the deform parameters is equal to the total number of vertices in 
@@ -236,6 +248,17 @@ sphere_verts_rgb = torch.full([1, verts_shape[0], 3], 0.5, device=device, requir
 optimizer = torch.optim.SGD([deform_verts, sphere_verts_rgb], lr=1.0, momentum=0.9)
 
 loop = tqdm(range(Niter))
+
+# Losses to smooth / regularize the mesh shape
+def update_mesh_shape_prior_losses(mesh, loss):
+    # and (b) the edge length of the predicted mesh
+    loss["edge"] = mesh_edge_loss(mesh)
+    
+    # mesh normal consistency
+    loss["normal"] = mesh_normal_consistency(mesh)
+    
+    # mesh laplacian smoothing
+    loss["laplacian"] = mesh_laplacian_smoothing(mesh, method="uniform")
 
 for i in loop:
     # Initialize optimizer
@@ -286,11 +309,15 @@ for i in loop:
     sum_loss.backward()
     optimizer.step()
 
+visualize_prediction(new_src_mesh, renderer=renderer_textured, silhouette=False)
+plot_losses(losses)
+
+# Fetch the verts and faces of the final predicted mesh
 final_verts, final_faces = new_src_mesh.get_mesh_verts_faces(0)
 
 # Scale normalize back to the original target size
 final_verts = final_verts * scale + center
 
 # Store the predicted mesh using save_obj
-final_obj = os.path.join('./', 'final_model.obj')
+final_obj = os.path.join('../output', 'final_model.obj')
 save_obj(final_obj, final_verts, final_faces)
