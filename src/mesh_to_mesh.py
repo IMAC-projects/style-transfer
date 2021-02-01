@@ -26,7 +26,7 @@ else:
     print("WARNING: CPU only, this will be slow!")
 
 # load the target mesh
-trg_obj = os.path.join('../assets/meshes/02t.obj')
+trg_obj = os.path.join('../assets/meshes/01t.obj')
 
 # we read the target 3D model using load_obj
 verts, faces, aux = load_obj(trg_obj)
@@ -44,7 +44,7 @@ scale = max(verts.abs().max(0)[0])
 verts = verts / scale
 
 # Load the source mesh.
-src_obj = os.path.join('../assets/meshes/02ss_02.obj')
+src_obj = os.path.join('../assets/meshes/01ss.obj')
 
 # we read the source 3D model using load_obj
 Sverts, Sfaces, Saux = load_obj(src_obj)
@@ -83,7 +83,7 @@ deform_verts = torch.full(src_mesh.verts_packed().shape, 0.0, device=device, req
 
 optimizer = torch.optim.SGD([deform_verts], lr=1.0, momentum=0.9)
 
-Niter = 1000
+Niter = 5000
 # weight for the chamfer loss
 w_chamfer = 1.0 
 # weight for mesh edge loss
