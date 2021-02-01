@@ -11,6 +11,19 @@ This repository is based on [3DModelingRL](https://github.com/clinplayer/3DModel
 }
 ```
 
+
+## How to install Pytorch3D ?
+
+Everything is explained in the [README](https://github.com/facebookresearch/pytorch3d/blob/master/INSTALL.md) of the pytorch3D lib.
+
+I installed Pytorch3D, with the following command :
+
+```python
+pip install "git+https://github.com/facebookresearch/pytorch3d.git@stable"
+```
+
+## Aim of this project
+
 Our aim is to transform a 3D model (mesh) with deep learning in order to apply an artistic style to it after processing.
 
 **Input:**
