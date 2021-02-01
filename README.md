@@ -16,10 +16,20 @@ This repository is based on [3DModelingRL](https://github.com/clinplayer/3DModel
 
 Everything is explained in the [README](https://github.com/facebookresearch/pytorch3d/blob/master/INSTALL.md) of the pytorch3D lib.
 
+The following command are for my GC only with CUDA 11.2
+
+```bash
+curl -LO https://github.com/NVIDIA/cub/archive/1.11.0.tar.gz
+tar xzf 1.11.0.tar.gz
+export CUB_HOME=$PWD/cub-1.11.0
+```
+
 I installed Pytorch3D, with the following command :
 
 ```python
-pip install "git+https://github.com/facebookresearch/pytorch3d.git@stable"
+git clone "https://github.com/facebookresearch/pytorch3d.git"
+cd pytorch3d
+pip install -e .
 ```
 
 ## Aim of this project

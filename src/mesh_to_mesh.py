@@ -26,7 +26,7 @@ else:
     print("WARNING: CPU only, this will be slow!")
 
 # load the target mesh
-trg_obj = os.path.join('meshes/02t.obj')
+trg_obj = os.path.join('../assets/meshes/02t.obj')
 
 # we read the target 3D model using load_obj
 verts, faces, aux = load_obj(trg_obj)
@@ -44,7 +44,7 @@ scale = max(verts.abs().max(0)[0])
 verts = verts / scale
 
 # Load the source mesh.
-src_obj = os.path.join('meshes/02ss_02.obj')
+src_obj = os.path.join('../assets/meshes/02ss_02.obj')
 
 # we read the source 3D model using load_obj
 Sverts, Sfaces, Saux = load_obj(src_obj)
@@ -76,9 +76,6 @@ def plot_pointcloud(mesh, title=""):
     ax.view_init(190, 30)
     plt.show()
 
-'''
-plot_pointcloud(trg_mesh, "Target mesh")
-plot_pointcloud(src_mesh, "Source mesh")'''
 
 # we will learn to deform the source mesh by offsetting its vertices
 # the shape of the deform parameters is equal to the total number of vertices in src_mesh
@@ -154,5 +151,5 @@ final_verts, final_faces = new_src_mesh.get_mesh_verts_faces(0)
 final_verts = final_verts * scale + center
 
 # store the predicted mesh using save_obj
-final_obj = os.path.join('./meshes', 'final_model.obj')
+final_obj = os.path.join('../output', 'final_model.obj')
 save_obj(final_obj, final_verts, final_faces)
