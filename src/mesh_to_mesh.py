@@ -26,7 +26,7 @@ else:
     print("WARNING: CPU only, this will be slow!")
 
 # load the target mesh
-trg_obj = os.path.join('../assets/meshes/01t.obj')
+trg_obj = os.path.join('../assets/meshes/cow.obj')
 
 # we read the target 3D model using load_obj
 verts, faces, aux = load_obj(trg_obj)
