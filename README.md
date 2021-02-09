@@ -32,6 +32,12 @@ cd pytorch3d
 pip install -e .
 ```
 
+## Dependencies
+
+pytorch3d
+trimesh
+mpl_toolkits
+
 ## Aim of this project
 
 Our aim is to transform a 3D model (mesh) with deep learning in order to apply an artistic style to it after processing.
