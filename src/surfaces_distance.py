@@ -3,8 +3,8 @@ import numpy as np
 from scipy.spatial import KDTree
 
 p = pv.Plotter()
-obj1 = pv.read("../output/final_model.obj")
-obj2 = pv.read("../assets/meshes/01t.obj")
+obj1 = pv.read("../output/final_model_cow.obj")
+obj2 = pv.read("../assets/meshes/cow.obj")
 p.add_mesh(obj1, smooth_shading=True)
 p.add_mesh(obj2, smooth_shading=True)
 p.show_grid()
