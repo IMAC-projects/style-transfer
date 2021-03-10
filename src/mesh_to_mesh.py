@@ -1,3 +1,4 @@
+import argparse
 import os
 import torch
 from pytorch3d.io import load_obj, save_obj
@@ -15,6 +16,17 @@ from tqdm import tqdm
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-v', '--verbosity', help="increase output verbosity", action="store_true")
+parser.add_argument('-s','--source', help='source file path', required=True)
+parser.add_argument('-t','--target', help='target file path', required=True)
+parser.add_argument('-o','--output', help='Output file path', required=True)
+parser.add_argument('-i','--iter', help='number of iterations', default=5000)
+
+args = parser.parse_args()
+V = args.verbosity
+
 mpl.rcParams['savefig.dpi'] = 80
 mpl.rcParams['figure.dpi'] = 80
 
@@ -26,7 +38,7 @@ else:
     print("WARNING: CPU only, this will be slow!")
 
 # load the target mesh
-trg_obj = os.path.join('../assets/meshes/teapot_subdivided.obj')
+trg_obj = os.path.join(args.target)
 
 # we read the target 3D model using load_obj
 verts, faces, aux = load_obj(trg_obj)
@@ -44,7 +56,7 @@ scale = max(verts.abs().max(0)[0])
 verts = verts / scale
 
 # Load the source mesh.
-src_obj = os.path.join('../assets/meshes/01ss.obj')
+src_obj = os.path.join(args.source)
 
 # we read the source 3D model using load_obj
 Sverts, Sfaces, Saux = load_obj(src_obj)
@@ -76,14 +88,13 @@ def plot_pointcloud(mesh, title=""):
     ax.view_init(190, 30)
     plt.show()
 
-
 # we will learn to deform the source mesh by offsetting its vertices
 # the shape of the deform parameters is equal to the total number of vertices in src_mesh
 deform_verts = torch.full(src_mesh.verts_packed().shape, 0.0, device=device, requires_grad=True)
 
 optimizer = torch.optim.SGD([deform_verts], lr=1.0, momentum=0.9)
 
-Niter = 5000
+Niter = args.iter
 # weight for the chamfer loss
 w_chamfer = 1.0 
 # weight for mesh edge loss
@@ -94,14 +105,13 @@ w_normal = 0.01
 w_laplacian = 0.1 
 # plot period for the losses
 plot_period = 250
-loop = tqdm(range(Niter))
 
 chamfer_losses = []
 laplacian_losses = []
 edge_losses = []
 normal_losses = []
 
-for i in loop:
+for i in tqdm(range(Niter)):
     # initialize optimizer
     optimizer.zero_grad()
     # deform the mesh
@@ -127,22 +137,24 @@ for i in loop:
     normal_losses.append(loss_normal)
     laplacian_losses.append(loss_laplacian)
     # plot mesh
-    if i % plot_period == 0:
-        plot_pointcloud(new_src_mesh, title="iter: %d" % i)
+    if V and i % plot_period == 0:
+        plot_pointcloud(new_src_mesh, title=f"iter: {i} / {loop}")
     # optimization step
     loss.backward()
     optimizer.step()
 
-fig = plt.figure(figsize=(13, 5))
-ax = fig.gca()
-ax.plot(chamfer_losses, label="chamfer loss")
-ax.plot(edge_losses, label="edge loss")
-ax.plot(normal_losses, label="normal loss")
-ax.plot(laplacian_losses, label="laplacian loss")
-ax.legend(fontsize="16")
-ax.set_xlabel("Iteration", fontsize="16")
-ax.set_ylabel("Loss", fontsize="16")
-ax.set_title("Loss vs iterations", fontsize="16")
+if V:
+    fig = plt.figure(figsize=(13, 5))
+    ax = fig.gca()
+    ax.plot(chamfer_losses, label="chamfer loss")
+    ax.plot(edge_losses, label="edge loss")
+    ax.plot(normal_losses, label="normal loss")
+    ax.plot(laplacian_losses, label="laplacian loss")
+    ax.legend(fontsize="16")
+    ax.set_xlabel("Iteration", fontsize="16")
+    ax.set_ylabel("Loss", fontsize="16")
+    ax.set_title("Loss vs iterations", fontsize="16")
+    fig.show()
 
 # fetch the verts and faces of the final predicted mesh
 final_verts, final_faces = new_src_mesh.get_mesh_verts_faces(0)
@@ -151,5 +163,4 @@ final_verts, final_faces = new_src_mesh.get_mesh_verts_faces(0)
 final_verts = final_verts * scale + center
 
 # store the predicted mesh using save_obj
-final_obj = os.path.join('../output', 'final_model.obj')
-save_obj(final_obj, final_verts, final_faces)
+save_obj(args.output, final_verts, final_faces)
