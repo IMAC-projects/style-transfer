@@ -16,24 +16,20 @@ if __name__ == "__main__":
 
     mesh = trimesh.load(args.input)
 
+    split = mesh.split()
+
+    if len(split) > 1:
+        print('splited mesh -> boolean needed')
+        mesh = trimesh.boolean.union(split)
+
     if(V):
-        print("is_watertight:", mesh.is_watertight) # is the current mesh watertight?
-        print("euler_number:", mesh.euler_number)  # what's the euler number for the mesh?
+        print("faces/vertices count:", len(mesh.faces), "/", len(mesh.vertices))
         print("volume / convex_hull volume:", mesh.volume / mesh.convex_hull.volume)
 
-    # since the mesh is watertight, it means there is a volumetric center of mass which we can set as the origin for our mesh
-    mesh.vertices -= mesh.center_mass
-
-    if(V):
-        print("moment_inertia:", mesh.moment_inertia) # what's the moment of inertia for the mesh?
-        print("faces/vertices count:", len(mesh.faces), "/", len(mesh.vertices))
-
-    if(V):
-        print(f"subdivision using ration of {args.ration}")
+        print(f"subdivision using ratio of {args.ratio}")
 
     max_edge = mesh.scale / args.ratio
     v, f = trimesh.remesh.subdivide_to_size(vertices=mesh.vertices, faces=mesh.faces, max_edge=max_edge, max_iter=10, return_index=False)
-
     mesh = trimesh.Trimesh(vertices=v, faces=f)
 
     if(V):
