@@ -110,8 +110,9 @@ chamfer_losses = []
 laplacian_losses = []
 edge_losses = []
 normal_losses = []
+loop = tqdm(range(Niter))
 
-for i in tqdm(range(Niter)):
+for i in loop:
     # initialize optimizer
     optimizer.zero_grad()
     # deform the mesh
@@ -137,7 +138,7 @@ for i in tqdm(range(Niter)):
     normal_losses.append(loss_normal)
     laplacian_losses.append(loss_laplacian)
     # plot mesh
-    if V and i % plot_period == 0:
+    if i % plot_period == 0:
         plot_pointcloud(new_src_mesh, title=f"iter: {i} / {loop}")
     # optimization step
     loss.backward()
